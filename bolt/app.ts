@@ -1,4 +1,4 @@
-import { App, MessageShortcut } from "@slack/bolt";
+import { App } from "@slack/bolt";
 
 const app = new App({
   token: process.env.SLACK_BOT_TOKEN!,
@@ -56,7 +56,7 @@ app.command("/momentum", async ({ command, ack, client }) => {
             {
               type: "button",
               text: { type: "plain_text", text: "Open Review Page" },
-              url: `${baseUrl}/dashboard`,
+              url: `${baseUrl}/`,
               style: "primary",
             },
           ],
