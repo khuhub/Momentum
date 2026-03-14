@@ -20,7 +20,7 @@ export default function ActionList() {
 
   if (actions.length === 0) {
     return (
-      <p className="text-gray-500 text-center py-8">
+      <p className="py-8 text-center text-slate-400">
         No threads analyzed yet. Use the &quot;Catch up with AI&quot; shortcut in Slack to get started.
       </p>
     );

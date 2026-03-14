@@ -350,7 +350,7 @@ export interface ThreadAction {
   draftMeeting: string;
   draftMeetingInvite: string;
   // State
-  status: "suggested" | "approved" | "rejected";
+  status: "suggested" | "approved" | "rejected" | "posted";
   createdAt: Date;
 }
 

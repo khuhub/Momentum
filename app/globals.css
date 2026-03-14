@@ -1,1 +1,67 @@
 @import "tailwindcss";
+
+:root {
+  --bg: #020a06;
+  --surface: #06150f;
+  --text: #dcfce7;
+  --muted: #86efac;
+  --border: #14532d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(22, 101, 52, 0.24), transparent 35%),
+    radial-gradient(circle at 85% 80%, rgba(20, 83, 45, 0.2), transparent 40%),
+    var(--bg);
+  color: var(--text);
+  font-family:
+    "Soehne",
+    "Avenir Next",
+    "IBM Plex Sans",
+    "Segoe UI",
+    "Helvetica Neue",
+    sans-serif;
+}
+
+.home-star {
+  position: absolute;
+  border-radius: 999px;
+  background: radial-gradient(circle, #6ee7b7 0%, #34d399 55%, rgba(16, 185, 129, 0.1) 100%);
+  box-shadow: 0 0 18px rgba(52, 211, 153, 0.6);
+  opacity: 0.85;
+  animation: home-star-pulse 2.8s ease-in-out infinite;
+}
+
+.home-star-launch {
+  animation:
+    home-star-launch 0.75s ease-in forwards,
+    home-star-pulse 2.8s ease-in-out infinite;
+}
+
+@keyframes home-star-pulse {
+  0%,
+  100% {
+    transform: scale(0.85);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}
+
+@keyframes home-star-launch {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(0, -120px, 0) scale(0.2);
+    opacity: 0;
+  }
+}
