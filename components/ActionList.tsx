@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import ActionCard from "./ActionCard";
-import type { Action } from "@/lib/store";
+import type { ThreadAction } from "@/lib/store";
 
 export default function ActionList() {
-  const [actions, setActions] = useState<Action[]>([]);
+  const [actions, setActions] = useState<ThreadAction[]>([]);
 
   useEffect(() => {
     async function fetchActions() {
@@ -21,7 +21,7 @@ export default function ActionList() {
   if (actions.length === 0) {
     return (
       <p className="text-gray-500 text-center py-8">
-        No actions yet. Send a message in Slack to get started.
+        No threads analyzed yet. Use the &quot;Catch up with AI&quot; shortcut in Slack to get started.
       </p>
     );
   }

@@ -1,5 +1,4 @@
-import { App } from "@slack/bolt";
-import { runAgent } from "../lib/agent";
+import { App, MessageShortcut } from "@slack/bolt";
 
 const app = new App({
   token: process.env.SLACK_BOT_TOKEN!,
@@ -7,27 +6,69 @@ const app = new App({
   socketMode: true,
 });
 
-app.message(async ({ message, say }) => {
-  if (message.subtype) return; // ignore bot messages, edits, etc.
+app.command("/momentum", async ({ command, ack, client }) => {
+  await ack();
 
-  const text = (message as { text?: string }).text;
-  if (!text) return;
+  const channelId = command.channel_id;
+  const threadTs = command.ts ?? String(Date.now() / 1000);
+  const userId = command.user_id;
 
   try {
-    const action = await runAgent(text);
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+    // Fetch recent channel messages (last 50)
+    const result = await client.conversations.history({
+      channel: channelId,
+      limit: 50,
+    });
 
-    await say(
-      `Got it — I created a *${action.actionType.replace("_", " ")}* action. ` +
-      `Review it on the dashboard: ${baseUrl}/action/${action.id}`
-    );
+    const messages = (result.messages ?? [])
+      .filter((m) => !m.subtype) // ignore system messages
+      .reverse() // oldest first
+      .map((m) => ({
+        user: m.user ?? "unknown",
+        text: m.text ?? "",
+      }));
+
+    // Run AI analysis via the Next.js API
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+    const res = await fetch(`${baseUrl}/api/action/create`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ channelId, threadTs, userId, messages }),
+    });
+
+    const { actionId } = await res.json();
+
+    // Post summary card into the channel (not as a thread reply)
+    await client.chat.postMessage({
+      channel: channelId,
+      text: "🧠 AI Catch-Up Ready — open the review page to see the summary.",
+      blocks: [
+        {
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: "🧠 *AI Catch-Up Ready*\nThe last 50 messages in this channel have been analyzed. Open the review page to see the summary and approve actions.",
+          },
+        },
+        {
+          type: "actions",
+          elements: [
+            {
+              type: "button",
+              text: { type: "plain_text", text: "Open Review Page" },
+              url: `${baseUrl}/action/${actionId}`,
+              style: "primary",
+            },
+          ],
+        },
+      ],
+    });
   } catch (err) {
-    console.error("Agent error:", err);
-    await say("Sorry, I couldn't process that. Try again?");
+    console.error("Catch-up error:", err);
   }
 });
 
 (async () => {
   await app.start();
-  console.log("⚡ Momentum Slack assistant running");
+  console.log("⚡ Momentum running");
 })();

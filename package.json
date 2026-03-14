@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "bolt": "tsx bolt/app.ts"
+    "bolt": "node --env-file=.env -r tsx/cjs bolt/app.ts"
   },
   "repository": {
     "type": "git",

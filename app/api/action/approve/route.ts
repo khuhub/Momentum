@@ -2,13 +2,13 @@ import { NextResponse } from "next/server";
 import { getAction, updateAction } from "@/lib/store";
 
 export async function POST(request: Request) {
-  const { id, status } = await request.json();
+  const { actionId, draftType, editedText } = await request.json();
 
-  const action = getAction(id);
+  const action = getAction(actionId);
   if (!action) {
     return NextResponse.json({ error: "Action not found" }, { status: 404 });
   }
 
-  updateAction(id, { status });
+  updateAction(actionId, { [draftType]: editedText, status: "approved" });
   return NextResponse.json({ success: true });
 }
