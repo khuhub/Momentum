@@ -36,18 +36,18 @@ app.command("/momentum", async ({ command, ack, client }) => {
       body: JSON.stringify({ channelId, threadTs, userId, messages }),
     });
 
-    const { actionId } = await res.json();
+    await res.json();
 
     // Post summary card into the channel (not as a thread reply)
     await client.chat.postMessage({
       channel: channelId,
-      text: "🧠 AI Catch-Up Ready — open the review page to see the summary.",
+      text: "Catch-Up — open the review page to see the summary.",
       blocks: [
         {
           type: "section",
           text: {
             type: "mrkdwn",
-            text: "🧠 *AI Catch-Up Ready*\nThe last 50 messages in this channel have been analyzed. Open the review page to see the summary and approve actions.",
+            text: "*Catch-Up*\nThe last 50 messages in this channel have been analyzed. Open the review page to see the summary and approve actions.",
           },
         },
         {
@@ -56,7 +56,7 @@ app.command("/momentum", async ({ command, ack, client }) => {
             {
               type: "button",
               text: { type: "plain_text", text: "Open Review Page" },
-              url: `${baseUrl}/action/${actionId}`,
+              url: `${baseUrl}/dashboard`,
               style: "primary",
             },
           ],

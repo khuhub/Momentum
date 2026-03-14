@@ -70,7 +70,7 @@ export default function ThreadReviewModal({ action, onClose }: ThreadReviewModal
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 p-4 backdrop-blur-sm">
-      <div className="mx-auto h-[92vh] w-full max-w-[1320px] overflow-hidden rounded-3xl border border-emerald-900/70 bg-[#03110b] shadow-[0_0_80px_rgba(16,185,129,0.14)]">
+      <div className="mx-auto h-[96vh] w-full max-w-[1320px] overflow-hidden rounded-3xl border border-emerald-900/70 bg-[#03110b] shadow-[0_0_80px_rgba(16,185,129,0.14)]">
         <div className="grid h-full grid-cols-1 md:grid-cols-[250px_340px_1fr]">
           <aside className="flex flex-col border-r border-emerald-900/60 bg-[#051710] p-4">
             <MomentumLogo
@@ -89,7 +89,7 @@ export default function ThreadReviewModal({ action, onClose }: ThreadReviewModal
             <button className="mt-auto rounded-xl px-3 py-2 text-left text-sm text-emerald-200/75">Settings</button>
           </aside>
 
-          <section className="border-r border-emerald-900/60 bg-[#04140e]">
+          <section className="border-r border-emerald-900/60 bg-[#04140e] overflow-y-auto">
             <div className="border-b border-emerald-900/60 p-4">
               <p className="text-4xl leading-none text-emerald-100">#</p>
             </div>
@@ -285,6 +285,20 @@ export default function ThreadReviewModal({ action, onClose }: ThreadReviewModal
                     draftType="draftSummary"
                     label="Post Summary"
                     initialText={action.draftSummary}
+                    status={action.status}
+                  />
+                  <ActionCard
+                    actionId={action.id}
+                    draftType="draftMeeting"
+                    label="Suggest Meeting"
+                    initialText={action.draftMeeting}
+                    status={action.status}
+                  />
+                  <ActionCard
+                    actionId={action.id}
+                    draftType="draftMeetingInvite"
+                    label="Meeting Invite"
+                    initialText={action.draftMeetingInvite}
                     status={action.status}
                   />
                 </div>
