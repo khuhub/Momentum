@@ -21,7 +21,7 @@ Employees and students alike waste hours reading past Slack conversations and sw
 - React + TypeScript
 - Slack Bolt (Socket Mode)
 - OpenAI API
-- Notion MCP
+- Notion API
 
 ## Requirements
 - Node.js
