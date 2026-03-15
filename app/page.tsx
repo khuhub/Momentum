@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, type CSSProperties } from "react";
+import { type CSSProperties } from "react";
 
 const stars = [
   { top: "8%", left: "12%", size: 2 },
@@ -20,14 +20,9 @@ const stars = [
 
 export default function Home() {
   const router = useRouter();
-  const [launching, setLaunching] = useState(false);
 
   function handleOpenDashboard() {
-    if (launching) return;
-    setLaunching(true);
-    window.setTimeout(() => {
-      router.push("/dashboard");
-    }, 750);
+    router.push("/dashboard");
   }
 
   return (
@@ -39,7 +34,7 @@ export default function Home() {
       {stars.map((star, index) => (
         <span
           key={index}
-          className={`home-star ${launching ? "home-star-launch" : ""}`}
+          className="home-star"
           style={{
             top: star.top,
             left: star.left,
@@ -62,10 +57,9 @@ export default function Home() {
           </p>
           <button
             onClick={handleOpenDashboard}
-            disabled={launching}
-            className="mt-6 rounded-xl border border-emerald-400/70 bg-emerald-500/20 px-6 py-3 text-sm font-semibold text-emerald-50 transition hover:bg-emerald-500/35 disabled:cursor-not-allowed disabled:opacity-70"
+            className="mt-6 rounded-xl border border-emerald-400/70 bg-emerald-500/20 px-6 py-3 text-sm font-semibold text-emerald-50 transition hover:bg-emerald-500/35"
           >
-            {launching ? "Launching..." : "Open Dashboard"}
+            Open Dashboard
           </button>
         </div>
       </section>

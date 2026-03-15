@@ -16,10 +16,15 @@ export async function POST() {
   const analysis = await analyzeThread(SEED_MESSAGES);
   const actionId = createAction({
     channelId: "C_DEV",
+    channelName: "dev-seed",
     threadTs: String(Date.now()),
     requestedBy: "dev-seed",
     status: "suggested",
     ...analysis,
+    actionItems: (analysis.actionItems ?? []).map((item) => ({
+      ...item,
+      status: "pending" as const,
+    })),
   });
   return NextResponse.json({ actionId }, { status: 201 });
 }

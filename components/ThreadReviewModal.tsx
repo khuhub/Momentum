@@ -2,9 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import ActionCard from "@/components/ActionCard";
-import MomentumLogo from "@/components/MomentumLogo";
 import StatusBadge from "@/components/StatusBadge";
-import type { ReviewAction } from "@/lib/review";
+import type { ReviewAction, ReviewActionItem } from "@/lib/review";
 
 interface ThreadReviewModalProps {
   action: ReviewAction;
@@ -12,7 +11,6 @@ interface ThreadReviewModalProps {
 }
 
 type TabKey = "summary" | "items" | "drafts";
-type ItemStatus = "pending" | "approved" | "rejected" | "suggested";
 
 function Avatar({ label }: { label: string }) {
   const initials = label
@@ -23,142 +21,123 @@ function Avatar({ label }: { label: string }) {
     .toUpperCase();
 
   return (
-    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-900/70 text-[10px] font-semibold text-emerald-100">
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-900/70 text-[10px] font-semibold text-emerald-100">
       {initials}
     </div>
   );
 }
 
-function ItemStatusPill({ status }: { status: ItemStatus }) {
-  const classes: Record<ItemStatus, string> = {
-    pending: "bg-amber-500/15 text-amber-200",
-    approved: "bg-emerald-500/15 text-emerald-200",
-    rejected: "bg-rose-500/15 text-rose-200",
-    suggested: "bg-sky-500/15 text-sky-200",
-  };
-
-  return (
-    <span className={`rounded-full px-2.5 py-1 text-xs font-medium capitalize ${classes[status]}`}>
-      {status}
-    </span>
-  );
-}
 
 export default function ThreadReviewModal({ action, onClose }: ThreadReviewModalProps) {
+  const [current, setCurrent] = useState<ReviewAction>(action);
   const [activeTab, setActiveTab] = useState<TabKey>("summary");
-  const [itemOne, setItemOne] = useState<ItemStatus>("pending");
-  const [itemTwo, setItemTwo] = useState<ItemStatus>("suggested");
+  const [actionItems, setActionItems] = useState<ReviewActionItem[]>(action.actionItems ?? []);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        onClose();
-      }
+      if (event.key === "Escape") onClose();
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [onClose]);
 
-  const openQuestionCount = action.openQuestions.length;
-  const decisionCount = action.decision.trim() ? 1 : 0;
-  const suggestedStepCount = action.suggestedNextStep.trim() ? 1 : 0;
+  async function handleItemStatus(index: number, status: "approved" | "rejected") {
+    await fetch("/api/action/item-status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ actionId: current.id, itemIndex: index, status }),
+    });
+    setActionItems((prev) => prev.map((item, i) => (i === index ? { ...item, status } : item)));
+  }
+
+  async function handleResolve() {
+    await fetch("/api/action/resolve", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ actionId: current.id }),
+    });
+    setCurrent((prev) => ({ ...prev, status: "resolved" }));
+  }
+
+  const openQuestionCount = current.openQuestions.length;
+  const decisionCount = current.decision.trim() ? 1 : 0;
+  const suggestedStepCount = current.suggestedNextStep.trim() ? 1 : 0;
 
   const displayQuestions = useMemo(
-    () => (action.openQuestions.length > 0 ? action.openQuestions : ["No open questions in this thread."]),
-    [action.openQuestions]
+    () => (current.openQuestions.length > 0 ? current.openQuestions : ["No open questions in this thread."]),
+    [current.openQuestions]
   );
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 p-4 backdrop-blur-sm">
-      <div className="mx-auto h-[96vh] w-full max-w-[1320px] overflow-hidden rounded-3xl border border-emerald-900/70 bg-[#03110b] shadow-[0_0_80px_rgba(16,185,129,0.14)]">
-        <div className="grid h-full grid-cols-1 md:grid-cols-[250px_340px_1fr]">
-          <aside className="flex flex-col border-r border-emerald-900/60 bg-[#051710] p-4">
-            <MomentumLogo
-              className="px-2 py-1"
-              iconClassName="h-9 w-11"
-              textClassName="text-3xl font-semibold text-emerald-50"
-            />
-            <nav className="mt-6 space-y-2">
-              <button className="w-full rounded-xl bg-emerald-500/20 px-3 py-2 text-left text-sm font-semibold text-emerald-100">
-                Review Queue
-              </button>
-              <button className="w-full rounded-xl px-3 py-2 text-left text-sm text-emerald-200/75">
-                Resolved Threads
-              </button>
-            </nav>
-            <button className="mt-auto rounded-xl px-3 py-2 text-left text-sm text-emerald-200/75">Settings</button>
-          </aside>
+      <div className="relative mx-auto h-[96vh] w-full max-w-[1320px] overflow-hidden rounded-3xl border border-emerald-900/70 bg-[#03110b] shadow-[0_0_80px_rgba(16,185,129,0.14)]">
+        {/* Close button — top right */}
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 z-10 rounded-lg border border-emerald-700 bg-[#03110b] px-3 py-1.5 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-900/40"
+        >
+          Close ✕
+        </button>
 
-          <section className="border-r border-emerald-900/60 bg-[#04140e] overflow-y-auto">
-            <div className="border-b border-emerald-900/60 p-4">
-              <p className="text-4xl leading-none text-emerald-100">#</p>
-            </div>
-
+        <div className="grid h-full grid-cols-1 md:grid-cols-[340px_1fr]">
+          {/* Thread detail column */}
+          <section className="overflow-y-auto border-r border-emerald-900/60 bg-[#04140e]">
             <div className="border-b border-emerald-900/60 p-5">
-              <p className="text-3xl font-semibold text-emerald-50">#engineering-ops</p>
-              <div className="mt-4 flex items-center gap-2">
-                <Avatar label="W" />
-                <Avatar label="D" />
-                <Avatar label="Y" />
-                <span className="rounded-full bg-emerald-900/70 px-2 py-1 text-xs font-medium text-emerald-100">+12</span>
-                <span className="rounded-full bg-amber-500/15 px-3 py-1 text-xs font-medium text-amber-200">
-                  PENDING REVIEW
+              <p className="text-2xl font-semibold text-emerald-50">#{current.channelName}</p>
+              <div className="mt-3 flex items-center gap-2">
+                <Avatar label={current.requestedBy} />
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${
+                    current.status === "suggested"
+                      ? "bg-amber-500/15 text-amber-200"
+                      : current.status === "approved"
+                        ? "bg-emerald-500/15 text-emerald-200"
+                        : current.status === "posted"
+                          ? "bg-cyan-500/15 text-cyan-200"
+                          : current.status === "resolved"
+                            ? "bg-slate-500/15 text-slate-300"
+                            : "bg-rose-500/15 text-rose-200"
+                  }`}
+                >
+                  {current.status.toUpperCase()}
                 </span>
               </div>
-              <h2 className="mt-4 text-3xl font-semibold text-emerald-50">{action.threadTitle}</h2>
+              <h2 className="mt-3 text-2xl font-semibold text-emerald-50">{current.threadTitle}</h2>
             </div>
 
             <div className="space-y-5 p-5">
               <div className="flex gap-3">
-                <Avatar label="Wonpil" />
+                <Avatar label={current.requestedBy} />
                 <div>
-                  <p className="text-sm font-semibold text-emerald-100">Wonpil</p>
-                  <p className="text-sm text-emerald-200/80">{action.summary}</p>
+                  <p className="text-sm font-semibold text-emerald-100">{current.requestedBy}</p>
+                  <p className="text-sm text-emerald-200/80">{current.summary}</p>
                 </div>
               </div>
               <div className="flex gap-3">
-                <Avatar label="Dowooon" />
+                <Avatar label="Decision" />
                 <div>
-                  <p className="text-sm font-semibold text-emerald-100">Dowooon</p>
-                  <p className="text-sm text-emerald-200/80">{action.decision}</p>
+                  <p className="text-sm font-semibold text-emerald-100">Decision</p>
+                  <p className="text-sm text-emerald-200/80">{current.decision}</p>
                 </div>
-              </div>
-              <div className="rounded-xl border border-dashed border-emerald-800 p-4 text-center text-sm text-emerald-300/70">
-                AI analysis run here
               </div>
             </div>
           </section>
 
-          <section className="flex h-full flex-col bg-[#03130c]">
-            <header className="flex items-center gap-3 border-b border-emerald-900/60 p-3">
-              <input
-                placeholder="Search or type a command..."
-                className="h-11 flex-1 rounded-xl border border-emerald-800 bg-[#051a12] px-4 text-sm text-emerald-200/80"
-                aria-label="Search"
-              />
-              <Avatar label="U" />
-              <button
-                onClick={onClose}
-                className="rounded-lg border border-emerald-700 px-3 py-2 text-xs font-semibold text-emerald-100"
-              >
-                Close
-              </button>
-            </header>
-
-            <div className="min-h-0 flex-1 overflow-y-auto p-5">
-              <div className="mb-3 flex items-center gap-2 text-sm text-emerald-200/70">
-                <span>Active Projects</span>
-                <span>&gt;</span>
-                <span>{action.threadTitle}</span>
-              </div>
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <h3 className="text-4xl font-semibold tracking-tight text-emerald-50">
-                  Thread Analysis: {action.threadTitle}
+          {/* Analysis panel */}
+          <section className="bg-[#03130c]">
+            <div className="h-[96vh] overflow-y-auto p-5 pb-10">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3 pr-24">
+                <h3 className="text-3xl font-semibold tracking-tight text-emerald-50">
+                  {current.threadTitle}
                 </h3>
                 <div className="flex items-center gap-2">
-                  <StatusBadge status={action.status} />
-                  <button className="rounded-xl border border-emerald-700 px-4 py-2 text-sm font-medium text-emerald-100">
-                    Mark Thread Resolved
+                  <StatusBadge status={current.status} />
+                  <button
+                    onClick={handleResolve}
+                    disabled={current.status === "resolved"}
+                    className="rounded-xl border border-emerald-700 px-4 py-2 text-sm font-medium text-emerald-100 transition hover:bg-emerald-900/30 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {current.status === "resolved" ? "Resolved" : "Mark Thread Resolved"}
                   </button>
                 </div>
               </div>
@@ -190,7 +169,7 @@ export default function ThreadReviewModal({ action, onClose }: ThreadReviewModal
                     <p className="text-sm font-semibold text-emerald-100">Decisions Made</p>
                     <p className="mt-1 text-5xl font-semibold text-emerald-300">{decisionCount}</p>
                     <ul className="mt-2 list-disc pl-5 text-sm text-emerald-100/85">
-                      <li>{action.decision}</li>
+                      <li>{current.decision}</li>
                     </ul>
                   </article>
                   <article className="rounded-2xl border border-emerald-900/60 bg-[#06170f] p-4">
@@ -206,100 +185,100 @@ export default function ThreadReviewModal({ action, onClose }: ThreadReviewModal
                     <p className="text-sm font-semibold text-emerald-100">Suggested Next Step</p>
                     <p className="mt-1 text-5xl font-semibold text-emerald-300">{suggestedStepCount}</p>
                     <ul className="mt-2 list-disc pl-5 text-sm text-emerald-100/85">
-                      <li>{action.suggestedNextStep}</li>
+                      <li>{current.suggestedNextStep}</li>
                     </ul>
                   </article>
                 </div>
               ) : null}
 
               {activeTab === "items" ? (
-                <div className="overflow-hidden rounded-2xl border border-emerald-900/60">
-                  <table className="w-full table-auto border-collapse text-left">
-                    <thead className="bg-emerald-950/40 text-sm text-emerald-100">
-                      <tr>
-                        <th className="px-4 py-3 font-semibold">Review Item</th>
-                        <th className="px-4 py-3 font-semibold">Assigned To</th>
-                        <th className="px-4 py-3 font-semibold">Status</th>
-                        <th className="px-4 py-3 font-semibold">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr className="border-t border-emerald-900/60">
-                        <td className="px-4 py-3 text-sm text-emerald-100">{action.suggestedNextStep}</td>
-                        <td className="px-4 py-3">
-                          <Avatar label="Team" />
-                        </td>
-                        <td className="px-4 py-3">
-                          <ItemStatusPill status={itemOne} />
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex flex-wrap gap-2">
-                            <button
-                              onClick={() => setItemOne("approved")}
-                              className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-emerald-50"
-                            >
-                              Approve
-                            </button>
-                            <button
-                              onClick={() => setItemOne("rejected")}
-                              className="rounded-lg border border-emerald-700 px-3 py-1.5 text-xs font-semibold text-emerald-100"
-                            >
-                              Reject
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr className="border-t border-emerald-900/60">
-                        <td className="px-4 py-3 text-sm text-emerald-100">Post status to channel (Draft)</td>
-                        <td className="px-4 py-3">
-                          <Avatar label="Team" />
-                        </td>
-                        <td className="px-4 py-3">
-                          <ItemStatusPill status={itemTwo} />
-                        </td>
-                        <td className="px-4 py-3">
-                          <button
-                            onClick={() => setItemTwo("approved")}
-                            className="rounded-lg border border-emerald-700 px-3 py-1.5 text-xs font-semibold text-emerald-100"
-                          >
-                            Review Draft Reply
-                          </button>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+                actionItems.length === 0 ? (
+                  <p className="py-8 text-center text-sm text-emerald-200/50">No action items identified in this thread.</p>
+                ) : (
+                  <div className="overflow-hidden rounded-2xl border border-emerald-900/60">
+                    <table className="w-full table-auto border-collapse text-left">
+                      <thead className="bg-emerald-950/40 text-sm text-emerald-100">
+                        <tr>
+                          <th className="px-4 py-3 font-semibold">Task</th>
+                          <th className="px-4 py-3 font-semibold">Assignee</th>
+                          <th className="px-4 py-3 font-semibold">Status</th>
+                          <th className="px-4 py-3 font-semibold">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {actionItems.map((item, i) => (
+                          <tr key={i} className="border-t border-emerald-900/60">
+                            <td className="px-4 py-3 text-sm text-emerald-100">{item.task}</td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                <Avatar label={item.assignee} />
+                                <span className="text-xs text-emerald-200/70">{item.assignee}</span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className={`rounded-full px-2.5 py-1 text-xs font-medium capitalize ${
+                                item.status === "approved" ? "bg-emerald-500/15 text-emerald-200" :
+                                item.status === "rejected" ? "bg-rose-500/15 text-rose-200" :
+                                "bg-amber-500/15 text-amber-200"
+                              }`}>
+                                {item.status}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex flex-wrap gap-2">
+                                <button
+                                  onClick={() => handleItemStatus(i, "approved")}
+                                  disabled={item.status === "approved"}
+                                  className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-emerald-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  onClick={() => handleItemStatus(i, "rejected")}
+                                  disabled={item.status === "rejected"}
+                                  className="rounded-lg border border-emerald-700 px-3 py-1.5 text-xs font-semibold text-emerald-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )
               ) : null}
 
               {activeTab === "drafts" ? (
                 <div className="space-y-4">
                   <ActionCard
-                    actionId={action.id}
+                    actionId={current.id}
                     draftType="draftReply"
                     label="Draft Reply"
-                    initialText={action.draftReply}
-                    status={action.status}
+                    initialText={current.draftReply}
+                    status={current.status}
                   />
                   <ActionCard
-                    actionId={action.id}
+                    actionId={current.id}
                     draftType="draftSummary"
                     label="Post Summary"
-                    initialText={action.draftSummary}
-                    status={action.status}
+                    initialText={current.draftSummary}
+                    status={current.status}
                   />
                   <ActionCard
-                    actionId={action.id}
+                    actionId={current.id}
                     draftType="draftMeeting"
                     label="Suggest Meeting"
-                    initialText={action.draftMeeting}
-                    status={action.status}
+                    initialText={current.draftMeeting}
+                    status={current.status}
                   />
                   <ActionCard
-                    actionId={action.id}
+                    actionId={current.id}
                     draftType="draftMeetingInvite"
                     label="Meeting Invite"
-                    initialText={action.draftMeetingInvite}
-                    status={action.status}
+                    initialText={current.draftMeetingInvite}
+                    status={current.status}
                   />
                 </div>
               ) : null}

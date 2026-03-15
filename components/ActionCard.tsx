@@ -8,6 +8,7 @@ const statusColors: Record<string, string> = {
   approved: "bg-emerald-500/15 text-emerald-200 border-emerald-500/40",
   rejected: "bg-rose-500/15 text-rose-200 border-rose-500/40",
   posted: "bg-cyan-500/15 text-cyan-200 border-cyan-500/40",
+  resolved: "bg-slate-500/15 text-slate-300 border-slate-500/40",
 };
 
 interface ActionCardProps {
@@ -124,7 +125,8 @@ function DraftCard({
         </span>
       </div>
       <textarea
-        className="w-full resize-y rounded-xl border border-emerald-800 bg-[#051a12] p-3 text-sm text-emerald-200/80 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[80px]"
+        className="w-full resize-y rounded-xl border border-emerald-800 bg-[#051a12] p-3 text-sm text-emerald-200/80 focus:outline-none focus:ring-2 focus:ring-emerald-500 overflow-y-auto"
+        rows={Math.max(5, (text.match(/\n/g)?.length ?? 0) + 2)}
         value={text}
         onChange={(e) => setText(e.target.value)}
         disabled={status === "posted"}

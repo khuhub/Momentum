@@ -5,6 +5,7 @@ const statusClasses: Record<ReviewStatus, string> = {
   approved: "bg-emerald-500/15 text-emerald-200 border-emerald-500/40",
   rejected: "bg-rose-500/15 text-rose-200 border-rose-500/40",
   posted: "bg-cyan-500/15 text-cyan-200 border-cyan-500/40",
+  resolved: "bg-slate-500/15 text-slate-300 border-slate-500/40",
 };
 
 export default function StatusBadge({ status }: { status: ReviewStatus }) {

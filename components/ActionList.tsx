@@ -7,9 +7,13 @@ import { normalizeAction, type ReviewAction } from "@/lib/review";
 
 interface ActionListProps {
   onOpenThread?: (action: ReviewAction) => void;
+  filter: "queue" | "resolved";
 }
 
-export default function ActionList({ onOpenThread }: ActionListProps) {
+const QUEUE_STATUSES = ["suggested", "approved"];
+const RESOLVED_STATUSES = ["posted", "rejected", "resolved"];
+
+export default function ActionList({ onOpenThread, filter }: ActionListProps) {
   const [actions, setActions] = useState<ThreadAction[]>([]);
 
   useEffect(() => {
@@ -23,17 +27,23 @@ export default function ActionList({ onOpenThread }: ActionListProps) {
     return () => clearInterval(interval);
   }, []);
 
-  if (actions.length === 0) {
+  const filtered = actions.filter((a) =>
+    filter === "queue" ? QUEUE_STATUSES.includes(a.status) : RESOLVED_STATUSES.includes(a.status)
+  );
+
+  if (filtered.length === 0) {
     return (
       <p className="py-8 text-center text-slate-400">
-        No threads analyzed yet. Use <strong>/momentum</strong> in Slack to get started.
+        {filter === "queue"
+          ? <>No threads in the queue. Use <strong>/momentum</strong> in Slack to get started.</>
+          : "No resolved threads yet."}
       </p>
     );
   }
 
   return (
     <div className="grid gap-4">
-      {actions.map((action) => (
+      {filtered.map((action) => (
         <ActionCard
           key={action.id}
           action={action}
