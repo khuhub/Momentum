@@ -3,6 +3,8 @@ Employees and students alike waste hours reading past Slack conversations and sw
 
 **Momentum** is a Slack-based AI assistant that turns Slack into a command center for getting work done. The system uses an AI agent to understand conversations between users and complete action items such as drafting emails, creating Notion documents and tasks, and generating conversation summaries. A web dashboard allows users to review, edit, and approve generated actions before they are finalized. By combining Slack, AI reasoning, and MCP-powered tools, Momentum helps users reduce context switching and complete everyday tasks more efficiently.
 
+![Video Demo](https://github.com/user-attachments/assets/a8871ea5-7aed-487d-a592-5fd27b5efe9e)
+
 ## Features
 - Slash command: `/momentum`
 - AI analysis of recent channel messages
